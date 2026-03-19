@@ -47,6 +47,7 @@ export default function CreateTaskPage() {
   const [maxExecutors, setMaxExecutors] = useState(1)
   const [allowExchange, setAllowExchange] = useState(false)
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const validateStep1 = () => {
@@ -74,7 +75,8 @@ export default function CreateTaskPage() {
   const prevStep = () => setStep((s) => Math.max(s - 1, 1))
 
   const handlePublish = () => {
-    if (!user) return
+    if (!user || isSubmitting) return
+    setIsSubmitting(true)
     addTask({
       id: `task-${Date.now()}`,
       title,
@@ -480,9 +482,10 @@ export default function CreateTaskPage() {
           ) : (
             <button
               onClick={handlePublish}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-lg hover:shadow-emerald-500/20 transition-all"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-lg hover:shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4" /> Опубликовать
+              <Send className="w-4 h-4" /> {isSubmitting ? 'Публикация...' : 'Опубликовать'}
             </button>
           )}
         </div>

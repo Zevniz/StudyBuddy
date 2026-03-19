@@ -74,8 +74,15 @@ export default function AuthPage() {
   const validateRegister = () => {
     const newErrors: Record<string, string> = {}
     if (registerForm.name.length < 2) newErrors.name = 'Минимум 2 символа'
-    if (!registerForm.email.includes('@')) newErrors.email = 'Введите корректный email'
-    if (registerForm.password.length < 6) newErrors.password = 'Минимум 6 символов'
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(registerForm.email)) newErrors.email = 'Введите корректный email'
+    if (registerForm.password.length < 8) {
+      newErrors.password = 'Минимум 8 символов'
+    } else if (!/[A-ZА-ЯЁ]/.test(registerForm.password)) {
+      newErrors.password = 'Нужна хотя бы одна заглавная буква'
+    } else if (!/\d/.test(registerForm.password)) {
+      newErrors.password = 'Нужна хотя бы одна цифра'
+    }
     if (!registerForm.university) newErrors.university = 'Укажите университет'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -94,6 +101,8 @@ export default function AuthPage() {
         setErrors({ login: 'Неверный email или пароль. Проверьте данные.' })
       } else if (code === 'EMAIL_NOT_CONFIRMED') {
         setErrors({ login: 'Email не подтверждён. Проверьте почту.' })
+      } else if (code === 'EMAIL_LOGINS_DISABLED') {
+        setErrors({ login: 'Вход по email временно недоступен. Обратитесь к администратору.' })
       } else if (code === 'TIMEOUT') {
         setErrors({ login: 'Сервер не отвечает. Попробуйте позже.' })
       } else {
@@ -116,15 +125,19 @@ export default function AuthPage() {
       })
 
       if (result.needsConfirmation) {
+        // Email confirmation отключён в Supabase, но на случай если включат обратно
         setRegisteredEmail(registerForm.email)
         setViewState('email-sent')
       } else {
+        // Сессия создана сразу — переходим в onboarding
         setViewState('onboarding')
       }
     } catch (err: unknown) {
       const code = err instanceof Error ? err.message : ''
       if (code === 'USER_ALREADY_EXISTS') {
         setErrors({ register: 'Аккаунт с таким email уже существует. Войдите в систему.' })
+      } else if (code === 'EMAIL_LOGINS_DISABLED') {
+        setErrors({ register: 'Регистрация по email временно недоступна. Обратитесь к администратору.' })
       } else if (code === 'EMAIL_SERVICE_ERROR') {
         setErrors({ register: 'Ошибка отправки email. Попробуйте позже.' })
       } else if (code === 'TIMEOUT') {
@@ -456,7 +469,7 @@ export default function AuthPage() {
                           type={showPassword ? 'text' : 'password'}
                           value={registerForm.password}
                           onChange={(e) => { setRegisterForm((f) => ({ ...f, password: e.target.value })); setErrors((er) => ({ ...er, password: '' })) }}
-                          placeholder="Минимум 6 символов"
+                          placeholder="Минимум 8 символов, заглавная и цифра"
                           required
                           className={`${inputClasses} ${errors.password ? 'border-red-500/50' : ''}`}
                         />

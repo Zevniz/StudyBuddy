@@ -13,7 +13,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   register: (data: { name: string; email: string; password: string; university: string; faculty: string }) => Promise<{ needsConfirmation: boolean }>
   logout: () => Promise<void>
-  updateProfile: (data: Partial<AppUser>) => void
+  updateProfile: (data: Partial<AppUser>) => Promise<void>
   initialize: () => Promise<void>
 }
 
@@ -104,12 +104,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       )
       if (error) {
         const msg = error.message || ''
-        // Supabase returns "Invalid login credentials" for wrong password OR non-existent user
-        if (msg.includes('Invalid login credentials')) {
+        if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
           throw new Error('INVALID_CREDENTIALS')
         }
         if (msg.includes('Email not confirmed')) {
           throw new Error('EMAIL_NOT_CONFIRMED')
+        }
+        if (msg.includes('Email logins are disabled')) {
+          throw new Error('EMAIL_LOGINS_DISABLED')
         }
         throw new Error(msg)
       }
@@ -156,6 +158,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (msg.includes('sending confirmation') || msg.includes('unexpected_failure')) {
           throw new Error('EMAIL_SERVICE_ERROR')
         }
+        if (msg.includes('Email logins are disabled') || msg.includes('Signups not allowed')) {
+          throw new Error('EMAIL_LOGINS_DISABLED')
+        }
         throw new Error(msg)
       }
 
@@ -195,13 +200,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     })
   },
 
-  updateProfile: (data: Partial<AppUser>) => {
+  updateProfile: async (data: Partial<AppUser>) => {
     set((state) => ({
       user: state.user ? { ...state.user, ...data } : null,
     }))
     const currentUser = get().supabaseUser
     if (currentUser) {
-      supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         data: {
           name: data.name,
           university: data.university,
@@ -209,6 +214,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           bio: data.bio,
         },
       })
+      if (error) {
+        console.error('Failed to update profile:', error.message)
+      }
     }
   },
 }))

@@ -16,7 +16,8 @@ import {
 } from 'lucide-react'
 import { cn, getInitials, formatDate, timeAgo } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
-import { mockUsers, mockTasks, mockReviews } from '@/data/mock'
+import { useTaskStore } from '@/stores/taskStore'
+import { mockUsers, mockReviews } from '@/data/mock'
 import { BADGE_INFO, REPUTATION_LEVELS } from '@/types'
 import type { BadgeType } from '@/types'
 import { TaskCard } from '@/components/tasks/TaskCard'
@@ -36,12 +37,13 @@ type Tab = 'tasks' | 'history' | 'reviews'
 export default function ProfilePage() {
   const { id } = useParams<{ id: string }>()
   const currentUser = useAuthStore((s) => s.user)
+  const allTasks = useTaskStore((s) => s.tasks)
   const [activeTab, setActiveTab] = useState<Tab>('tasks')
 
   const profileUser = id ? mockUsers.find((u) => u.id === id) : currentUser
   if (!profileUser) return null
 
-  const userTasks = mockTasks.filter((t) => t.authorId === profileUser.id)
+  const userTasks = allTasks.filter((t) => t.authorId === profileUser.id)
   const activeTasks = userTasks.filter((t) => t.status !== 'closed')
   const completedTasks = userTasks.filter((t) => t.status === 'closed')
   const userReviews = mockReviews.filter((r) => r.toUserId === profileUser.id)

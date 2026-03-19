@@ -7,6 +7,7 @@ interface ChatState {
   messages: Record<string, ChatMessage[]>
   activeConversationId: string | null
   isTyping: Record<string, boolean>
+  _replyTimers: Record<string, ReturnType<typeof setTimeout>>
   setActiveConversation: (id: string | null) => void
   sendMessage: (conversationId: string, text: string, senderId: string) => void
   markAsRead: (conversationId: string) => void
@@ -17,6 +18,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: mockMessages,
   activeConversationId: null,
   isTyping: {},
+  _replyTimers: {},
 
   setActiveConversation: (id) => {
     set({ activeConversationId: id })
@@ -48,9 +50,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       ?.participants.find((p) => p !== senderId)
 
     if (otherParticipant) {
+      // Отменяем предыдущий таймер для этого чата, чтобы не было дублей
+      const prevTimer = get()._replyTimers[conversationId]
+      if (prevTimer) clearTimeout(prevTimer)
+
       set((state) => ({ isTyping: { ...state.isTyping, [conversationId]: true } }))
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         set((state) => ({ isTyping: { ...state.isTyping, [conversationId]: false } }))
 
         const replies = [
@@ -89,6 +95,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ),
         }))
       }, 1500 + Math.random() * 2000)
+
+      set((state) => ({ _replyTimers: { ...state._replyTimers, [conversationId]: timer } }))
     }
   },
 

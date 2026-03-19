@@ -54,7 +54,7 @@ export default function TaskPage() {
       userId: user.id,
       message: responseText,
       status: 'pending',
-      isExchangeOffer: isExchange,
+      isExchangeOffer: false,
       createdAt: new Date().toISOString(),
     })
     setResponseText('')

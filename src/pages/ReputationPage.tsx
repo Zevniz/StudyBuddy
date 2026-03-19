@@ -38,7 +38,7 @@ export default function ReputationPage() {
   const level = REPUTATION_LEVELS[user.reputationLevel]
   const levels = Object.entries(REPUTATION_LEVELS) as [ReputationLevel, typeof level][]
   const currentLevelIdx = levels.findIndex(([key]) => key === user.reputationLevel)
-  const nextLevel = currentLevelIdx < levels.length - 1 ? levels[currentLevelIdx + 1]![1] : null
+  const nextLevel = currentLevelIdx < levels.length - 1 ? levels[currentLevelIdx + 1]?.[1] ?? null : null
 
   const progressToNext = nextLevel
     ? ((user.reputation - level.minPoints) / (nextLevel.minPoints - level.minPoints)) * 100

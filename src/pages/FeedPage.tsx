@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PlusCircle, LayoutGrid, List, Inbox } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, pluralize } from '@/lib/utils'
 import { useTaskStore } from '@/stores/taskStore'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskFilters } from '@/components/tasks/TaskFilters'
@@ -32,7 +32,7 @@ export default function FeedPage() {
               animate={{ opacity: 1 }}
               className="mt-1 text-sm text-muted-foreground"
             >
-              {tasks.length === 0 ? 'Нет задач' : `${tasks.length} ${pluralizeTasks(tasks.length)}`}
+              {tasks.length === 0 ? 'Нет задач' : pluralize(tasks.length, 'задача', 'задачи', 'задач')}
             </motion.p>
           )}
         </div>
@@ -105,12 +105,4 @@ export default function FeedPage() {
       )}
     </div>
   )
-}
-
-function pluralizeTasks(count: number): string {
-  const mod10 = count % 10
-  const mod100 = count % 100
-  if (mod10 === 1 && mod100 !== 11) return 'задача'
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'задачи'
-  return 'задач'
 }
